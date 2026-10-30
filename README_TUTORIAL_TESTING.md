@@ -1,10 +1,7 @@
-# Tutorial & testing mode
+# Testing the play flow
 
-- The six-screen tutorial appears **before** the create/join room choices on a fresh browser session. Every screen includes an example of a consequence.
-- Players can replay it from the home screen or in a match using the **Tutorial** button.
-- The server now defaults to long **testing** phase timers: Build 4 minutes, Diplomacy 5 minutes, Council 3 minutes, Core Crisis 3 minutes.
-- To use the original short timers: `FI_TIMER_MODE=quick python -m uvicorn server:app --port 8000` (on Windows PowerShell: `$env:FI_TIMER_MODE="quick"; python -m uvicorn server:app --port 8000`).
-- Timers are authoritative on the server; changing the browser clock will not affect them.
-- The timer now displays `M:SS`.
-- Cosmetic improvements include clearer, more luminous world framing and highlighted selection. The 3D asset library and gameplay rules are unchanged.
-- Tutorial completion is stored per browser tab session; opening a fresh incognito session shows it again.
+Enter the waiting room to see the guide. Start requires at least two players who each chose an island. Turns proceed in seat order, beginning with the host. Each player gets one action, then waits for the next round. A 45-second timeout is a pass.
+
+Try building on each plot, trading and accepting on the recipient's turn, declining by choosing another action, setting and changing the next round's shared law, repair, timeout, game completion, and rematch. Harvest adds food per Farm and increases Core damage to 10 per round; Power adds energy per Tower and also increases Core damage to 10.
+
+The game server is authoritative; room state resets on server restart.

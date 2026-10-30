@@ -1,59 +1,24 @@
-# FRACTURE ISLES — playable multiplayer game
+# Fracture Isles
 
-A browser-based island strategy game for 2–6 people. Each player has a distinct island, a rotatable software-rendered 3D island scene, buildings, resource production, alliances, trades, global laws, Core crises, and an eight-round win condition. Uses a Python FastAPI WebSocket server with authoritative game logic.
+A browser multiplayer island game for 2 to 6 players. Each round, players take turns in seat order and make one choice. Build your island, trade with another player, or set a shared law. Keep the Core alive for eight rounds; the highest score wins.
 
-## Run locally
+## Play locally
 
-1. Install Python 3.10+.
-2. In this folder run `python -m pip install -r requirements.txt`.
-3. Run `python -m uvicorn server:app --host 0.0.0.0 --port 8000`.
-4. Open `http://localhost:8000` in your browser.
-5. For phones on the same Wi-Fi, open `http://YOUR_COMPUTER_LAN_IP:8000` (allow firewall access to port 8000). Create a room and share the six-character code.
+1. Install Python 3.10 or newer.
+2. Install dependencies: `python -m pip install -r requirements.txt`.
+3. Start the server: `python -m uvicorn server:app --host 127.0.0.1 --port 8000`.
+4. Open `http://127.0.0.1:8000`.
+5. Create a room, invite at least one other player, choose islands, then start.
 
-## Deploy for public play
+## Turn order
 
-Deploy this folder to a Python Web Service on Render, Railway, Fly.io, or a comparable host supporting WebSockets and long-running processes. Start command:
+The host chooses first, then each other player chooses in order. After making one choice, you wait until the next round. A turn times out after 45 seconds and becomes a pass.
 
-`uvicorn server:app --host 0.0.0.0 --port ${PORT:-8000}`
+Each turn, choose one action: build a Farm, Tower, or Monument; gather 2 food or energy; repair the Core; pass; offer a trade; accept a trade on your turn; or set next round's law.
 
-For a managed host, configure one running worker/instance. Enable HTTPS, which automatically uses secure WebSockets (`wss://`). A sleeping free instance may interrupt games. Do **not** use a static-only hosting service like GitHub Pages or Vercel static hosting: this project requires the Python server.
+- Farm: costs 1 energy, scores 1 point, and produces food each round. Tower: costs 1 food, scores 1 point, and produces energy. Monument: costs 2 food and 2 energy, and scores 3 points.
+- Repair: spend 1 energy to restore 12 Core health. Balanced law makes the Core lose 8 health each round.
+- Trade: offer another player 1 food for 1 energy, or 1 energy for 1 food. You use your action to offer; the recipient uses their action to accept. Choosing another action declines and returns the offered resource.
+- Set a law: use your action to set Balanced, Harvest, or Power for the next round. Balanced has normal production and Core loss 8. Harvest adds 1 food per Farm and makes the Core lose 10. Power adds 1 energy per Tower and makes the Core lose 10. Later players can change the law; the last law set before the round ends applies next round.
 
-## Limitations / production hardening
-
-- Match state is **in memory**, so restarting or scaling the server resets rooms. Use persistent database-backed transactions and a shared event bus before scaling to multiple instances.
-- The server validates actions and uses per-room locks, but is not hardened against abusive public traffic; add rate limits and room cleanup for a public launch.
-- The island renderer uses custom JavaScript 3D geometry projected onto a 2D canvas (rotatable 3D-style geometry), **not WebGL/Three.js**. This keeps the project self-contained and offline-installable. It is not a full GPU 3D scene.
-- Font download is optional; system fonts are used offline.
-- This project has not been deployed to a permanent public URL.
-- The user-facing timer is enforced by the server; matches are deliberately quick, and an eight-round game can take less than 10 minutes if players submit early.
-
-## Rules
-
-- Six specialties: Verdantia, Pyrrhos, Aetheria, Solara, Tiderest, Frostholm.
-- Each player has six plots, one build/upgrade/ability action per round.
-- Four buildings: farm, tower, market, monument. Upgrade once.
-- Every round: Build (20s), Diplomacy (35s), Council (15s if a law), Crisis pledge (15s on rounds 3 and 6), Reckoning (automatic).
-- Two completed trades per player per round; one active alliance per player.
-- Laws: Harvest, Rationing, Trade Incentive, Restoration, Wealth Levy, Emergency Powers.
-- Core starts at 70 and loses 3 per round; collapse at 0 causes collective loss.
-- Winner after eight rounds: prosperity + 2 per constructed building + well-being + min(8, floor(successful crisis contributions / 3)).
-
-## Quick test
-
-`python -m unittest discover -s tests -v`
-
-## Colorful Fantasy 3D update
-The island viewport now uses **real WebGL GPU-rendered 3D geometry**, with a rotatable camera, six different miniature biomes, dimensional buildings, detailed floating rock terrain, a glowing crystal Core and energy bridges in the shared archipelago. No additional frontend dependencies or CDN connection are required. WebGL must be enabled in your browser. Multiplayer backend and gameplay commands are unchanged.
-
-**Important:** These are custom low-poly procedural models, not professionally sculpted or textured commercial-quality assets. Browser visual quality and performance have not yet been verified in an interactive browser session in this environment. The existing game server still stores rooms in memory; deploy as a single server instance unless persistence is added.
-
-
-## Imported real 3D asset packs
-
-The frontend now loads the uploaded GLB models from `public/assets/` with Three.js.
-It uses the Sky Islands pack for actual floating terrain and the Riverside Town pack for houses, markets, and watermills.
-The IslandsFreeLand model is also included for future use.
-
-Three.js and GLTFLoader are loaded from esm.sh and therefore require internet access in the browser.
-Asset licenses are included in `ASSET_LICENSES.md`. These models are licensed for use in games but may **not** be redistributed as standalone asset packs.
-The game server and rules remain unchanged from the previous release.
+If the Core reaches zero, everyone loses. If it survives round eight, the highest score wins; ties go to the player who joined first. The server is authoritative and stores rooms in memory, so restarting it ends active games.
